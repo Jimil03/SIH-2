@@ -1,0 +1,8 @@
+{
+  "name": "Skill Bridge",
+  "description": "Digital governance capacity building platform empowering public servants with next-gen digital competencies, sovereign cloud management, and AI governance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

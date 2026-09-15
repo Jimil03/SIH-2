@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public servant profile and credential record stored in Firestore",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth user identifier"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Civil servant email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full name of the civil servant"
+        },
+        "role": {
+          "type": "string",
+          "description": "Ministerial role or title"
+        },
+        "department": {
+          "type": "string",
+          "description": "Department or agency"
+        },
+        "ministry": {
+          "type": "string",
+          "description": "Federated ministry name"
+        },
+        "clearanceLevel": {
+          "type": "string",
+          "description": "Security clearance designation"
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total learning experience points earned"
+        },
+        "streakDays": {
+          "type": "number",
+          "description": "Consecutive days of active training"
+        },
+        "completionRate": {
+          "type": "number",
+          "description": "Aggregate track progress percentage"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account registration timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Profile last updated timestamp"
+        }
+      },
+      "required": ["uid", "email", "displayName"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Individual module progress and quiz mastery record",
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string",
+          "description": "Unique identifier of the course module"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User identifier who completed the module"
+        },
+        "completionPercent": {
+          "type": "number",
+          "description": "Percentage of the module completed (0 to 100)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of module: not_started, in_progress, or mastered"
+        },
+        "lastQuizScore": {
+          "type": "number",
+          "description": "Score from the diagnostic checkpoint quiz"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of the last progress update"
+        }
+      },
+      "required": ["moduleId", "userId", "completionPercent", "status"]
+    },
+    "CohortRegistration": {
+      "title": "CohortRegistration",
+      "description": "Inter-ministerial cohort application submitted by a public servant",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique application registration identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the applicant"
+        },
+        "applicantName": {
+          "type": "string",
+          "description": "Full name of the officer"
+        },
+        "applicantEmail": {
+          "type": "string",
+          "description": "Official government email"
+        },
+        "ministry": {
+          "type": "string",
+          "description": "Sponsoring ministry or department"
+        },
+        "cohortTrack": {
+          "type": "string",
+          "description": "Target competency track for the cohort"
+        },
+        "clearanceLevel": {
+          "type": "string",
+          "description": "Government security clearance level"
+        },
+        "justification": {
+          "type": "string",
+          "description": "Brief deployment impact statement"
+        },
+        "status": {
+          "type": "string",
+          "description": "Application review status: submitted, approved, or pending"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Submission timestamp"
+        }
+      },
+      "required": ["id", "userId", "applicantName", "applicantEmail", "cohortTrack"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profiles with security restricted to the authenticated owner"
+    },
+    "/users/{userId}/progress/{moduleId}": {
+      "schema": {
+        "$ref": "#/entities/UserProgress"
+      },
+      "description": "Stores course progress and completion status per module for the owner"
+    },
+    "/cohortRegistrations/{registrationId}": {
+      "schema": {
+        "$ref": "#/entities/CohortRegistration"
+      },
+      "description": "Stores cohort enrollment applications submitted by authenticated civil servants"
+    }
+  }
+}

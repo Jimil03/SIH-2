@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common helper primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprint for UserProfile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName']) &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.displayName is string && data.displayName.size() <= 128;
+    }
+
+    // Validation Blueprint for UserProgress
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['moduleId', 'userId', 'completionPercent', 'status']) &&
+             data.moduleId is string && data.moduleId.size() <= 64 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.completionPercent is number && data.completionPercent >= 0 && data.completionPercent <= 100 &&
+             data.status is string && data.status.size() <= 32;
+    }
+
+    // Validation Blueprint for Cohort Registration
+    function isValidCohortReg(data) {
+      return data.keys().hasAll(['id', 'userId', 'applicantName', 'applicantEmail', 'cohortTrack']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.applicantName is string && data.applicantName.size() <= 128 &&
+             data.applicantEmail is string && data.applicantEmail.size() <= 256 &&
+             data.cohortTrack is string && data.cohortTrack.size() <= 128;
+    }
+
+    // User profiles collection
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false; // Disallow scraping all public servant identities
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming()) && incoming().uid == existing().uid;
+      allow delete: if false;
+
+      // User progress subcollection
+      match /progress/{moduleId} {
+        allow get, list: if isValidId(userId) && isOwner(userId);
+        allow create, update: if isValidId(userId) && isValidId(moduleId) && isOwner(userId) && isValidUserProgress(incoming());
+        allow delete: if false;
+      }
+    }
+
+    // Inter-ministerial cohort registrations
+    match /cohortRegistrations/{registrationId} {
+      allow get: if isValidId(registrationId) && isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(registrationId) && isSignedIn() && incoming().userId == request.auth.uid && isValidCohortReg(incoming());
+      allow update, delete: if false; // Applications are immutable audit records
+    }
+  }
+}
